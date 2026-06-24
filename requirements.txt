@@ -1,0 +1,15 @@
+yfinance>=0.2.40
+nsepy
+pandas>=2.0
+numpy>=1.26
+scipy
+statsmodels
+arch
+matplotlib
+seaborn
+streamlit
+weasyprint
+apscheduler
+pyyaml
+python-telegram-bot
+requests
