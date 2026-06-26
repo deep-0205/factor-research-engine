@@ -8,13 +8,16 @@ from data.download_data import download_ohlcv
 from data.processed.process_data import build_close_matrix, compute_returns
 from universe.universe import build_universe 
 from factors.factor_engine import run_factor_engine 
+from signals.signal_engine import run_signal_engine
+from risk.volatility_model import run_volatility_model
+
 
 logger = get_logger("main")
 
 def load_config(path="config.yaml"):
     with open(path, "r") as file:
         return yaml.safe_load(file)
-    
+
 def main():
     config = load_config()
     logger.info(f"Starting {config['project']['name']} v{config['project']['version']}")
@@ -59,6 +62,29 @@ def main():
     )
     composite_scores = factor_data["composite"]
     logger.info("Factor engine complete.")
+
+    logger.info("Phase 5: Signal Engine")
+    signal_data = run_signal_engine(
+        composite_scores=composite_scores,
+        universe_flags=universe_flags,
+        returns_matrix=returns
+    )
+    final_signals = signal_data["final_signals"]
+    logger.info("Signal engine complete.")
+
+    logger.info("Phase 6: Volatility Modeling")
+    vol_data = run_volatility_model(
+        returns_matrix=returns,
+        universe_flags=universe_flags,
+        current_universe=current_universe
+    )
+    vol_scalars = vol_data["vol_scalars"]
+    vol_matrix = vol_data["vol_matrix"]
+    index_result = vol_data["index_result"]
+    logger.info(
+        f"Market regime: {index_result['regime']} | "
+        f"Index vol: {index_result['forecast_vol']:.2%}"
+    )
 
 
 if __name__ == "__main__":
