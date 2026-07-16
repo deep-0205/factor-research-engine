@@ -1,0 +1,13 @@
+,0
+hist_var_95,0.0
+hist_var_99,0.0
+param_var_95,0.0
+param_var_99,0.0
+cvar_95,
+cvar_99,
+is_normal,False
+skewness,0.0
+excess_kurt,0.0
+ulcer_index,0.0
+gain_to_pain,
+omega_ratio,
