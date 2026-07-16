@@ -128,6 +128,10 @@ def compute_ic(factor_scores: pd.DataFrame, returns_matrix: pd.DataFrame, forwar
     ic_series = {}
 
     for date in factor_scores.index:
+
+        if date not in forward_returns.index:
+            continue
+
         scores  = factor_scores.loc[date].dropna()
         fwd_ret = forward_returns.loc[date].dropna()
 
@@ -139,6 +143,11 @@ def compute_ic(factor_scores: pd.DataFrame, returns_matrix: pd.DataFrame, forwar
         ic_series[date] = ic
 
     ic = pd.Series(ic_series)
+
+    if ic.empty:
+        logger.warning("IC series is empty — not enough forward data")
+        return ic
+
     logger.info(
         f"IC Summary → Mean: {ic.mean():.4f}, "
         f"Std: {ic.std():.4f}, "

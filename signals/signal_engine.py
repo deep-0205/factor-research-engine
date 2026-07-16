@@ -91,11 +91,12 @@ def compute_turnover(signals: pd.DataFrame) -> pd.Series:
     return turnover
 
 def get_rebalance_dates(index: pd.DatetimeIndex, frequency: str = "monthly") -> list:
+    index = pd.DatetimeIndex(index)
 
     if frequency == "monthly":
+        dates = pd.Series(index, index=index)
         rebalance_dates = (
-            pd.Series(index, index=index)
-            .groupby([index.year, index.month])
+            dates.groupby([index.year, index.month])
             .first()
             .tolist()
         )

@@ -1,5 +1,3 @@
-# universe/universe.py
-
 import pandas as pd
 import numpy as np
 import os
@@ -14,18 +12,38 @@ def load_config():
 
 def compute_average_volume(raw_path: str, tickers: list, lookback: int = 60) -> pd.Series:
     avg_volumes = {}
+
     for ticker in tickers:
         path = os.path.join(raw_path, f"{ticker}.csv")
         if not os.path.exists(path):
             continue
         try:
-            df = pd.read_csv(path, index_col=0, parse_dates=True)
-            if "Volume" not in df.columns:
+            df = pd.read_csv(path, header=0)
+
+            if df.iloc[0].astype(str).str.contains(
+                ticker.split(".")[0], case=False, na=False
+            ).any():
+                df = pd.read_csv(path, header=0, skiprows=[1])
+
+            df.columns = [str(c).strip().lower() for c in df.columns]
+
+            date_col = df.columns[0]
+            df[date_col] = pd.to_datetime(df[date_col], errors="coerce")
+            df = df.set_index(date_col)
+            df = df[~df.index.isna()]
+
+            if "volume" not in df.columns:
                 continue
-            avg_vol = df["Volume"].iloc[-lookback:].mean()
-            avg_volumes[ticker] = avg_vol
+
+            vol = pd.to_numeric(df["volume"], errors="coerce")
+            avg_vol = vol.iloc[-lookback:].mean()
+
+            if pd.notna(avg_vol):
+                avg_volumes[ticker] = avg_vol
+
         except Exception as e:
             logger.warning(f"Volume read failed for {ticker}: {e}")
+
     return pd.Series(avg_volumes)
 
 def apply_liquidity_filter(avg_volumes: pd.Series, min_avg_volume: int) -> list:
@@ -44,9 +62,23 @@ def apply_history_filter(close_matrix: pd.DataFrame, min_history_days: int = 252
     return valid
 
 def apply_price_filter(close_matrix: pd.DataFrame, min_price: float = 10.0) -> list:
+
+    if not isinstance(close_matrix.index, pd.DatetimeIndex):
+        close_matrix.index = pd.to_datetime(
+            close_matrix.index, errors="coerce"
+        )
+        close_matrix = close_matrix[close_matrix.index.notna()]
+
     latest_prices = close_matrix.iloc[-1]
+
+    latest_prices = pd.to_numeric(latest_prices, errors="coerce")
+
     valid = latest_prices[latest_prices >= min_price].index.tolist()
-    logger.info(f"Price filter: {len(close_matrix.columns)} → {len(valid)} stocks")
+
+    logger.info(
+        f"Price filter: {len(close_matrix.columns)} → "
+        f"{len(valid)} stocks (min price: ₹{min_price})"
+    )
     return valid
 
 def build_historical_universe(

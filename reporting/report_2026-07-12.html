@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Factor Research Engine — Strategy Report</title>
+  <style>
+    * { 
+      box-sizing: border-box; margin: 0; padding: 0; 
+    }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      font-size: 13px;
+      color: #2c3e50;
+      background: #ffffff;
+      padding: 40px;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #1f4e79, #2e86c1);
+      color: white;
+      padding: 30px 40px;
+      border-radius: 8px;
+      margin-bottom: 30px;
+    }
+    .header h1 { font-size: 26px; margin-bottom: 6px; }
+    .header p  { opacity: 0.85; font-size: 13px; }
+
+    .section {
+      margin-bottom: 35px;
+      page-break-inside: avoid;
+    }
+    .section-title {
+      font-size: 16px;
+      font-weight: bold;
+      color: #1f4e79;
+      border-bottom: 2px solid #2e86c1;
+      padding-bottom: 6px;
+      margin-bottom: 16px;
+    }
+
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .metric-card {
+      background: #f0f4f8;
+      border-radius: 6px;
+      padding: 14px 16px;
+      border-left: 4px solid #2e86c1;
+    }
+    .metric-label {
+      font-size: 11px;
+      color: #717d7e;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+    .metric-value {
+      font-size: 20px;
+      font-weight: bold;
+      color: #1f4e79;
+    }
+    .metric-value.positive { color: #1e8449; }
+    .metric-value.negative { color: #922b21; }
+
+    .chart-container {
+      margin: 16px 0;
+      text-align: center;
+    }
+    .chart-container img {
+      max-width: 100%;
+      border-radius: 6px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      font-size: 12px;
+    }
+    th {
+      background: #1f4e79;
+      color: white;
+      padding: 8px 12px;
+      text-align: left;
+      font-weight: 600;
+    }
+    td {
+      padding: 7px 12px;
+      border-bottom: 1px solid #e8ecef;
+    }
+    tr:nth-child(even) td { background: #f8f9fa; }
+    tr:hover td { background: #eaf2fb; }
+
+    .positive { color: #1e8449; font-weight: 600; }
+    .negative { color: #922b21; font-weight: 600; }
+
+    .status-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    .status-COMPLETE  { background: #d5f5e3; color: #1e8449; }
+    .status-PARTIAL   { background: #fef9e7; color: #d4ac0d; }
+    .status-FAILED    { background: #fadbd8; color: #922b21; }
+
+    .footer {
+      margin-top: 40px;
+      padding-top: 16px;
+      border-top: 1px solid #e8ecef;
+      color: #717d7e;
+      font-size: 11px;
+      text-align: center;
+    }
+
+    @media print {
+      body { padding: 20px; }
+      .section { page-break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Factor Research Engine — Strategy Report</h1>
+  <p>Generated: 2026-07-12 12:06 IST &nbsp;|&nbsp;
+     Strategy: NSE Nifty 500 Long/Short Factor Strategy &nbsp;|&nbsp;
+     Universe: Nifty 500</p>
+</div>
+
+<div class="section">
+  <div class="section-title">Pipeline Status</div>
+  <div style="margin-bottom: 12px;">
+    Status:
+    <span class="status-badge status-PARTIAL">
+      PARTIAL
+    </span>
+    &nbsp;&nbsp;
+    Run Date: <strong>2026-07-12</strong>
+    &nbsp;&nbsp;
+    Universe: <strong>0 stocks</strong>
+    &nbsp;&nbsp;
+    Longs: <strong>0</strong>
+    &nbsp;&nbsp;
+    Shorts: <strong>0</strong>
+    &nbsp;&nbsp;
+    Market Regime:
+    <strong>MEDIUM</strong>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">Performance Summary</div>
+  <div class="metrics-grid">
+    <div class="metric-card">
+      <div class="metric-label">CAGR</div>
+      <div class="metric-value negative">
+        nan%
+      </div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Sharpe Ratio</div>
+      <div class="metric-value negative">
+        nan
+      </div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Sortino Ratio</div>
+      <div class="metric-value">nan</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Max Drawdown</div>
+      <div class="metric-value negative">nan%</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Calmar Ratio</div>
+      <div class="metric-value">nan</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Win Rate</div>
+      <div class="metric-value">nan%</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">VaR 95%</div>
+      <div class="metric-value negative">nan%</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">CVaR 95%</div>
+      <div class="metric-value negative">nan%</div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">Equity Curve & Drawdowns</div>
+  <div class="chart-container">
+    <img src="/Users/deepdesai/factor-research-engine/reporting/charts/equity_curve.png" alt="Equity Curve">
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">Rolling Risk Metrics</div>
+  <div class="chart-container">
+    <img src="/Users/deepdesai/factor-research-engine/reporting/charts/rolling_risk.png" alt="Rolling Risk">
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">Monthly Returns Heatmap</div>
+  <div class="chart-container">
+    <img src="/Users/deepdesai/factor-research-engine/reporting/charts/monthly_heatmap.png" alt="Monthly Returns">
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">Factor Information Coefficient</div>
+  <div class="chart-container">
+    <img src="/Users/deepdesai/factor-research-engine/reporting/charts/ic_series.png" alt="IC Series">
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">Stress Test Results</div>
+  <div class="chart-container">
+    <img src="/Users/deepdesai/factor-research-engine/reporting/charts/stress_tests.png" alt="Stress Tests">
+  </div>
+  
+</div>
+
+<div class="section">
+  <div class="section-title">Top 5 Drawdown Episodes</div>
+  
+</div>
+
+<div class="section">
+  <div class="section-title">Risk Metrics Detail</div>
+  <table>
+    <tr><th>Metric</th><th>Value</th><th>Interpretation</th></tr>
+    <tr>
+      <td>Historical VaR (95%)</td>
+      <td class="negative">nan%</td>
+      <td>Expected loss exceeded on 5% of days</td>
+    </tr>
+    <tr>
+      <td>Historical VaR (99%)</td>
+      <td class="negative">nan%</td>
+      <td>Expected loss exceeded on 1% of days</td>
+    </tr>
+    <tr>
+      <td>CVaR (95%)</td>
+      <td class="negative">nan%</td>
+      <td>Average loss on worst 5% of days</td>
+    </tr>
+    <tr>
+      <td>Skewness</td>
+      <td>nan</td>
+      <td>Negative = more large losses than gains</td>
+    </tr>
+    <tr>
+      <td>Excess Kurtosis</td>
+      <td>nan</td>
+      <td>Fat tails if > 0</td>
+    </tr>
+    <tr>
+      <td>Ulcer Index</td>
+      <td>nan</td>
+      <td>RMS of drawdown depths — lower is better</td>
+    </tr>
+    <tr>
+      <td>Omega Ratio</td>
+      <td>nan</td>
+      <td>Gain/loss ratio above zero threshold</td>
+    </tr>
+  </table>
+</div>
+
+<div class="footer">
+  Factor Research Engine &nbsp;|&nbsp;
+  NSE Nifty 500 Long/Short Factor Strategy &nbsp;|&nbsp;
+  2026-07-12 12:06 IST &nbsp;|&nbsp;
+  For internal use only
+</div>
+
+</body>
+</html>

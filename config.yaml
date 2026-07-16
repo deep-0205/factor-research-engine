@@ -4,7 +4,7 @@ project:
 
 universe:
   index: Nifty500
-  min_avg_volume: 500000        # Liquidity filter
+  min_avg_volume: 500000       
   lookback_days: 365
 
 data:
@@ -16,7 +16,7 @@ data:
 
 factors:
   momentum_window: 252
-  momentum_skip: 21             # Skip last 21 days (avoid short-term reversal)
+  momentum_skip: 21             
   reversal_window: 5
   volatility_window: 20
 
@@ -38,6 +38,20 @@ backtest:
   slippage_bps: 5
 
 alerts:
-  drawdown_threshold: -0.10     # Alert if drawdown > 10%
-  var_breach_multiplier: 1.5    # Alert if VaR breached by 1.5x
+  drawdown_threshold: -0.10
+  var_breach_multiplier: 1.5
+  vol_spike_threshold: 0.30
+
+  email:
+    enabled: false
+    sender: "deepdesai2296@gmail.com"
+    recipient: "deepdesai0205@gmail.com"
+    smtp_server: "smtp.gmail.com"
+    smtp_port: 587
+    app_password: "nmwa eopr lqda hfji"
+
+  telegram:
+    enabled: false
+    bot_token: "8660185524:AAGmExdOThw56NEnAQa0Bq-c8bYf5xLqNYs"
+    chat_id: "2095344625"
 
