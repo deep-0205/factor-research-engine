@@ -14,15 +14,43 @@ def load_config():
         return yaml.safe_load(f)
     
 def compute_historical_var(returns: pd.Series, confidence: float = 0.95, horizon: int = 1) -> dict:
+    """
+    Compute historical (empirical) VaR via percentile method.
+    
+    CRITICAL:
+    - VaR = percentile(returns, 1 - confidence)
+    - Historical VaR does NOT assume any distribution
+    - Horizon scaling uses √horizon (assumes iid returns)
+    - Validates breach rate against expected
+    
+    Args:
+        returns: Daily returns (typically OOS backtest returns)
+        confidence: Confidence level (0.95 = 95%)
+        horizon: Number of days to project (1 = 1-day VaR)
+        
+    Returns:
+        Dictionary with VaR and diagnostics
+    """
+    
+    if returns.empty:
+        logger.warning("Empty returns provided to compute_historical_var")
+        return {"var_1d": np.nan, "confidence": confidence}
 
     clean = returns.dropna()
+    
+    if len(clean) < 10:
+        logger.warning(f"Insufficient data for VaR: {len(clean)} obs")
+        return {"var_1d": np.nan, "confidence": confidence}
 
+    # Percentile method (VaR is the loss at the confidence level)
     var_1d = np.percentile(clean, (1 - confidence) * 100)
 
+    # Horizon projection: √horizon (assumes iid returns)
     var_horizon = var_1d * np.sqrt(horizon)
 
-    breaches     = clean[clean < var_1d]
-    breach_rate  = len(breaches) / len(clean)
+    # Breach analysis
+    breaches = clean[clean < var_1d]
+    breach_rate = len(breaches) / len(clean)
     expected_rate = 1 - confidence
 
     result = {
@@ -39,24 +67,56 @@ def compute_historical_var(returns: pd.Series, confidence: float = 0.95, horizon
     logger.info(
         f"Historical VaR ({confidence:.0%}) | "
         f"1-day: {var_1d:.4f} | "
-        f"Breach rate: {breach_rate:.4f} "
-        f"(expected: {expected_rate:.4f})"
+        f"Breaches: {len(breaches)}/{len(clean)} "
+        f"({breach_rate:.4f} vs {expected_rate:.4f} expected)"
     )
     return result
 
 def compute_parametric_var(returns: pd.Series, confidence: float = 0.95, horizon: int = 1) -> dict:
+    """
+    Compute parametric (normal) VaR assuming gaussian distribution.
+    
+    CRITICAL:
+    - VaR = μ + z_score × σ (normal assumption)
+    - For horizon h: scale daily VaR by √h (NOT horizon itself!)
+    - Tests normality with Jarque-Bera test
+    - Useful for comparison but data often has fat tails
+    
+    Args:
+        returns: Daily returns
+        confidence: Confidence level
+        horizon: Number of days
+        
+    Returns:
+        Dictionary with VaR, normality test, and moments
+    """
+    
+    if returns.empty:
+        logger.warning("Empty returns provided to compute_parametric_var")
+        return {"var_1d": np.nan, "confidence": confidence}
 
     clean = returns.dropna()
-    mu    = clean.mean()
+    
+    if len(clean) < 10:
+        logger.warning(f"Insufficient data for parametric VaR: {len(clean)} obs")
+        return {"var_1d": np.nan, "confidence": confidence}
+
+    mu = clean.mean()
     sigma = clean.std()
 
-    z_score  = norm.ppf(1 - confidence)
-    var_1d   = mu + z_score * sigma
+    # Z-score from standard normal (for 95%, z ≈ -1.645)
+    z_score = norm.ppf(1 - confidence)  # ppf gives lower tail, so we use 1 - confidence
+    
+    # 1-day VaR
+    var_1d = mu + z_score * sigma
+    
+    # Horizon scaling: VaR(h) = VaR(1) * √h
     var_horizon = var_1d * np.sqrt(horizon)
 
+    # Normality test
     _, p_value = stats.jarque_bera(clean)
-    skewness   = clean.skew()
-    kurtosis   = clean.kurt()   
+    skewness = clean.skew()
+    kurtosis = clean.kurt()
 
     result = {
         "var_1d"         : round(var_1d, 6),
@@ -74,7 +134,8 @@ def compute_parametric_var(returns: pd.Series, confidence: float = 0.95, horizon
     logger.info(
         f"Parametric VaR ({confidence:.0%}) | "
         f"1-day: {var_1d:.4f} | "
-        f"Normal: {p_value > 0.05} (JB p={p_value:.4f})"
+        f"Normal: {p_value > 0.05} (JB p={p_value:.4f}) | "
+        f"Skew: {skewness:.4f}, Kurt: {kurtosis:.4f}"
     )
     return result
 
@@ -162,11 +223,10 @@ def run_stress_tests(returns: pd.Series, weight_matrix: pd.DataFrame, returns_ma
 
     stress_periods = {
         "COVID_Crash_2020"    : ("2020-02-01", "2020-03-31"),
-        "IL&FS_Crisis_2018"   : ("2018-09-01", "2018-12-31"),
         "COVID_Recovery_2020" : ("2020-04-01", "2020-06-30"),
         "Bear_Market_2022"    : ("2022-01-01", "2022-06-30"),
-        "Demonetization_2016" : ("2016-11-01", "2016-12-31"),
-        "Global_GFC_2008"     : ("2008-09-01", "2009-03-31")
+        "Rate_Hike_2018"      : ("2018-09-01", "2018-12-31"),
+        "Post_COVID_Rally"    : ("2020-11-01", "2021-03-31"),
     }
 
     stress_results = []
@@ -319,38 +379,69 @@ def run_risk_engine(oos_returns: pd.Series,
         returns_matrix: pd.DataFrame,
         factor_returns: dict = None,
         save_path: str = "risk/") -> dict:
+    """
+    Complete risk analysis pipeline.
+    
+    CRITICAL: Uses only OOS (out-of-sample) backtest returns.
+    
+    Pipeline:
+    1. VaR metrics (historical and parametric)
+    2. CVaR (tail risk)
+    3. Rolling risk metrics
+    4. Stress tests on historical crises
+    5. Factor decomposition (optional)
+    6. Tail risk statistics
+    
+    Args:
+        oos_returns: Out-of-sample backtest returns (walk-forward OOS)
+        weight_matrix: Portfolio weights
+        returns_matrix: Daily stock returns
+        factor_returns: Optional factor returns dict
+        save_path: Output directory
+        
+    Returns:
+        Dictionary with all risk metrics
+    """
+    
+    if oos_returns.empty:
+        logger.error("Empty oos_returns provided to run_risk_engine")
+        return {}
 
-    config = load_config()
     os.makedirs(save_path, exist_ok=True)
 
-    logger.info("Computing VaR metrics...")
-    hist_var_95  = compute_historical_var(oos_returns, confidence=0.95)
-    hist_var_99  = compute_historical_var(oos_returns, confidence=0.99)
+    logger.info("=" * 60)
+    logger.info("RISK ANALYSIS PIPELINE")
+    logger.info("=" * 60)
+
+    logger.info("STEP 1: Computing VaR metrics...")
+    hist_var_95 = compute_historical_var(oos_returns, confidence=0.95)
+    hist_var_99 = compute_historical_var(oos_returns, confidence=0.99)
     param_var_95 = compute_parametric_var(oos_returns, confidence=0.95)
     param_var_99 = compute_parametric_var(oos_returns, confidence=0.99)
 
-    logger.info("Computing CVaR...")
+    logger.info("STEP 2: Computing CVaR...")
     cvar_95 = compute_cvar(oos_returns, confidence=0.95)
     cvar_99 = compute_cvar(oos_returns, confidence=0.99)
 
-    logger.info("Computing rolling risk metrics...")
+    logger.info("STEP 3: Computing rolling risk metrics...")
     rolling_risk = compute_rolling_risk(oos_returns, window=63)
 
-    logger.info("Running stress tests...")
+    logger.info("STEP 4: Running stress tests...")
     stress_results = run_stress_tests(
         oos_returns, weight_matrix, returns_matrix
     )
 
     decomp_df = pd.DataFrame()
     if factor_returns:
-        logger.info("Running factor risk decomposition...")
+        logger.info("STEP 5: Running factor risk decomposition...")
         decomp_df = compute_factor_risk_decomposition(
             oos_returns, factor_returns
         )
-
-    logger.info("Computing tail risk statistics...")
+    
+    logger.info("STEP 6: Computing tail risk statistics...")
     tail_risk = compute_tail_risk(oos_returns)
 
+    # Summary risk report
     risk_report = {
         "hist_var_95"  : hist_var_95["var_1d"],
         "hist_var_99"  : hist_var_99["var_1d"],
@@ -366,6 +457,8 @@ def run_risk_engine(oos_returns: pd.Series,
         "omega_ratio"  : tail_risk["omega_ratio"]
     }
 
+    # Save outputs
+    logger.info("Saving risk analysis outputs...")
     pd.Series(hist_var_95).to_csv(
         os.path.join(save_path, "var_95.csv")
     )
@@ -389,7 +482,7 @@ def run_risk_engine(oos_returns: pd.Series,
         os.path.join(save_path, "risk_report.csv")
     )
 
-    logger.info("Risk engine complete. All outputs saved to risk/")
+    logger.info(f"Risk analysis complete. Outputs saved to {save_path}")
 
     return {
         "hist_var_95"  : hist_var_95,
@@ -401,4 +494,3 @@ def run_risk_engine(oos_returns: pd.Series,
         "tail_risk"    : tail_risk,
         "risk_report"  : risk_report
     }
-

@@ -9,9 +9,54 @@ from logger import get_logger
 logger = get_logger("pipeline_runner")
 
 
+def initialize_reproducibility(seed: int = 42) -> None:
+    """
+    Initialize random seeds for full reproducibility.
+    
+    CRITICAL: All quantitative results must be reproducible across runs.
+    This function ensures consistent behavior from:
+    - NumPy random operations (array generation, sampling)
+    - Python random module
+    - Pandas operations with randomization
+    
+    Must be called at pipeline start, BEFORE any random operations.
+    
+    Args:
+        seed: Random seed value (default 42)
+    """
+    np.random.seed(seed)
+    np.random.RandomState(seed)
+    
+    import random
+    random.seed(seed)
+    
+    # Pandas operations with seed
+    pd.np.random.seed(seed) if hasattr(pd, 'np') else None
+    
+    logger.info(f"Reproducibility initialized: seed={seed}")
+
+
 def load_config():
-    with open("config.yaml") as f:
-        return yaml.safe_load(f)
+    """Load and validate configuration file."""
+    try:
+        with open("config.yaml") as f:
+            config = yaml.safe_load(f)
+        
+        # ✓ Validate critical config keys exist
+        required_keys = ["project", "data", "universe", "backtest", "portfolio"]
+        for key in required_keys:
+            if key not in config:
+                logger.warning(f"Missing config key: {key}")
+        
+        logger.debug(f"Config loaded: {config.get('project', {}).get('name', 'UNKNOWN')}")
+        return config
+    
+    except FileNotFoundError:
+        logger.error("config.yaml not found")
+        raise
+    except yaml.YAMLError as e:
+        logger.error(f"Config YAML error: {e}")
+        raise
 
 def step_update_data(config: dict) -> bool:
 
@@ -262,6 +307,22 @@ def step_run_backtest(weights: pd.DataFrame, returns: pd.DataFrame) -> dict:
         return {}
     
 def run_daily_pipeline() -> dict:
+    """
+    Execute complete daily quantitative research pipeline.
+    
+    CRITICAL: This function orchestrates all pipeline steps with:
+    - Reproducibility initialization
+    - Step-by-step error handling
+    - Fallback strategies for partial failures
+    - Comprehensive pipeline state tracking
+    - Validation at each stage
+    
+    Returns:
+        dict with status, results, and step-by-step execution log
+    """
+    
+    # ✓ CRITICAL: Initialize reproducibility at pipeline start
+    initialize_reproducibility(seed=42)
 
     config  = load_config()
     results = {}
@@ -327,7 +388,7 @@ def run_daily_pipeline() -> dict:
         fallback = "signals/final_signals.csv"
         if os.path.exists(fallback):
             final_signals = pd.read_csv(
-                fallback, index_col=0, parse_dates=True
+                fallback, index_col=0, parse_dates=False
             )
             logger.warning("Using yesterday's signals as fallback")
         else:
@@ -349,7 +410,7 @@ def run_daily_pipeline() -> dict:
         fallback = "risk/rolling_vol_matrix.csv"
         if os.path.exists(fallback):
             vol_matrix = pd.read_csv(
-                fallback, index_col=0, parse_dates=True
+                fallback, index_col=0, parse_dates=False
             )
             index_result = {"regime": "UNKNOWN", "forecast_vol": np.nan}
             logger.warning("Using saved vol matrix as fallback")
@@ -384,7 +445,7 @@ def run_daily_pipeline() -> dict:
     oos_path = "backtest/oos_returns.csv"
     if os.path.exists(oos_path):
         oos_returns = pd.read_csv(
-            oos_path, index_col=0, parse_dates=True
+            oos_path, index_col=0, parse_dates=False
         ).squeeze()
         risk_data = step_compute_risk(oos_returns, weights, returns)
         step_statuses["risk"] = "OK" if risk_data else "FAILED"

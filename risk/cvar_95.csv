@@ -1,9 +1,9 @@
 ,0
-cvar,
-var_threshold,0.0
+cvar,-0.00635
+var_threshold,-0.003598
 confidence,0.95
-tail_obs,0.0
-tail_std,
-worst_day,
-tail_skewness,
-cvar_to_var,
+tail_obs,74.0
+tail_std,0.003721
+worst_day,-0.026451
+tail_skewness,-3.1818
+cvar_to_var,1.7652

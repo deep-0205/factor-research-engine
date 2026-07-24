@@ -203,7 +203,7 @@ def plot_monthly_returns_heatmap(oos_returns: pd.Series, save_path: str = None) 
     if oos_returns.empty:
         return None
 
-    monthly = oos_returns.resample("M").apply(
+    monthly = oos_returns.resample("ME").apply(
         lambda x: (1 + x).prod() - 1
     )
     pivot = monthly.groupby(

@@ -16,7 +16,7 @@ def load_report_data() -> dict:
 
     data = {}
 
-    def safe_read_csv(path, index_col=0, parse_dates=True):
+    def safe_read_csv(path, index_col=0, parse_dates=False):
         if not os.path.exists(path):
             logger.warning(f"Missing file: {path}")
             return pd.DataFrame()

@@ -1,9 +1,9 @@
 ,0
-var_1d,0.0
-var_horizon,0.0
+var_1d,-0.003598
+var_horizon,-0.003598
 confidence,0.95
 horizon,1.0
-breach_count,0.0
-breach_rate,0.0
+breach_count,74.0
+breach_rate,0.05
 expected_rate,0.050000000000000044
-n_observations,72.0
+n_observations,1480.0

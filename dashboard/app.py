@@ -28,7 +28,7 @@ COLORS = {
 @st.cache_data(ttl=300)   
 def load_data() -> dict:
 
-    def safe_csv(path, index_col=0, parse_dates=True):
+    def safe_csv(path, index_col=0, parse_dates=False):
         if not os.path.exists(path):
             return pd.DataFrame()
         try:
@@ -41,7 +41,9 @@ def load_data() -> dict:
         df = safe_csv(path)
         if df.empty:
             return pd.Series(dtype=float)
-        return df.iloc[:, 0]
+        # Series from CSV has index as metric names and column "0" with values
+        # Convert to Series with index as metric names and values as data
+        return pd.Series(df.iloc[:, 0].values, index=df.index)
 
     def safe_yaml(path):
         if not os.path.exists(path):
@@ -370,7 +372,7 @@ def render_equity_curve(data: dict):
 
     st.subheader("Monthly Returns Heatmap")
     if not ret.empty:
-        monthly = ret.resample("M").apply(
+        monthly = ret.resample("ME").apply(
             lambda x: (1 + x).prod() - 1
         )
         pivot = monthly.groupby(

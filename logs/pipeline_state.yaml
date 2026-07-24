@@ -1,10 +1,10 @@
-index_vol: 0.14195385577939784
-last_run: '2026-07-13T18:58:11.154365'
-market_regime: MEDIUM
+index_vol: .nan
+last_run: '2026-07-24T18:42:03.650825'
+market_regime: UNKNOWN
 n_longs: 0
 n_shorts: 0
-run_date: '2026-07-13'
-status: COMPLETE
+run_date: '2026-07-24'
+status: PARTIAL
 step_results:
   backtest: OK
   data_process: OK
@@ -14,5 +14,5 @@ step_results:
   risk: OK
   signals: OK
   universe: OK
-  volatility: OK
+  volatility: FAILED
 universe_size: 0
